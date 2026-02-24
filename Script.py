@@ -7,12 +7,12 @@ tf.get_logger().setLevel(logging.ERROR)
 
 from keras.utils import image_dataset_from_directory
 
-#Koristimo samo podatke iz train foldera za obucavanje i validaciju dok podatke iz test foldera koristimo za testiranje
+#We only use the data from the train folder for training and validation, while we use the data from the test folder for testing
 train_path = './train/'
 test_path = './test/'
 
 '''
-#Kod koji smo koristili da uklonimo corruptovane slike
+#The code we used to remove the corrupted images
 num_skipped = 0
 for source_name in ("train", "test"):
     for folder_name in ("Cat", "Dog", "Horse", "Elephant","Lion"):
@@ -33,7 +33,7 @@ for source_name in ("train", "test"):
     print(f"Deleted {num_skipped} images.")
 '''
 
-#Unosimo podatke i klasifikujemo ih
+# We enter data and classify it
 img_size = (64,64)
 batch_size = 64
 
@@ -44,7 +44,7 @@ Xtest = image_dataset_from_directory(test_path, image_size = img_size, batch_siz
 classes = Xtrain.class_names
 print(classes)
 
-#Prikazivanje primera slika
+# Showing sample images
 N = 10
 plt.figure()
 for img, lab in Xtrain.take(1):
@@ -54,8 +54,7 @@ for img, lab in Xtrain.take(1):
         plt.title(classes[lab[i]])
         plt.axis('off')
 
-
-#Klase su nebalansirane pa moramo da dodamo class weight, nalazimo broj img svake klase i racunamo tezine
+# The classes are unbalanced, so we have to add the class weight, find the number of imgs of each class and calculate the weights
 from sklearn.utils import class_weight
 import pandas as pd
 import fnmatch
@@ -74,7 +73,7 @@ count_Lion = len(fnmatch.filter(os.listdir(Lion_path), '*.*'))
 
 Y = pd.Series(np.concatenate((np.repeat('Dog',count_Dog), np.repeat('Cat',count_Cat), np.repeat('Elephant',count_Elephant), np.repeat('Horse',count_Horse), np.repeat('Lion',count_Lion))))
 
-#Prikazivanje nebalansiranosti klasa
+# Showing class imbalances
 plt.figure()
 Y.hist()
 plt.show()
@@ -82,7 +81,7 @@ plt.show()
 weights = class_weight.compute_class_weight( class_weight = 'balanced', classes = classes, y=Y)
 c_weight={0:weights[0], 1:weights[1], 2:weights[2], 3:weights[3], 4:weights[4]}
 
-#Pravimo neuralnu mrezu
+# building a neural network.
 from keras import layers
 from keras import Sequential
 from keras.optimizers import Adam
@@ -101,7 +100,7 @@ data_augmentation = Sequential(
      ]
     )
 
-#Prikazivanje preprocesovanih slika
+# Displaying preprocessed images
 N = 10
 plt.figure()
 for img, lab in Xtrain.take(1):
@@ -159,7 +158,7 @@ def display_train_result(history, model):
 
     from sklearn.metrics import accuracy_score
     score = 100*accuracy_score(labels_val, pred_val)
-    print('Tacnost modela na validaciji je: ' + str(score) + '%')
+    print('The accuracy of the model (validation): ' + str(score) + '%')
     print('==========================================================')
     
     from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -176,7 +175,7 @@ parameter['lr'] = 0.001
 parameter['reg'] = 0.01
 
 '''
-#Aktivacione funkcije
+#Activation functions
 var = 'activation'
 parameter[var] = ['relu', 'tanh', 'sigmoid']
 for i in parameter[var]:
@@ -189,7 +188,7 @@ for i in parameter[var]:
 parameter['activation'] = 'relu'
 '''
   
-#Konstanta ucenja
+# Learning rate
 var = 'lr'
 #parameter[var] = [0.001, 0.0001, 0.00001]
 parameter[var] = [0.01]
@@ -202,7 +201,7 @@ for i in parameter[var]:
 
 parameter['lr'] = 0.001
 
-#Regularizacija
+#Regularization
 var = 'reg'
 parameter[var] = [ 0.1 , 0.001]
 for i in parameter[var]:
@@ -214,12 +213,12 @@ for i in parameter[var]:
 
 parameter['reg'] = 0.001
 
-#Broj potrebnih epoha
+# Number of epochs required
 model = make_model(parameter)
 history = model.fit(Xtrain, epochs = 200, validation_data = Xval, class_weight=c_weight, verbose = 2)
 score = display_train_result(history, model)
 
-#Testiranje modela
+#Testing the model
 labels_test = np.array([])
 pred_test = np.array([])
 for img, lab in Xtest:
@@ -228,7 +227,7 @@ for img, lab in Xtest:
     
 from sklearn.metrics import accuracy_score
 score = 100*accuracy_score(labels_test, pred_test)
-print('Tacnost modela na testu je: ' + str(score) + '%')
+print('The accuracy of the model (test): ' + str(score) + '%')
 print('==========================================================')
 
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -237,7 +236,7 @@ cmDisplay = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
 cmDisplay.plot()
 plt.show()
 
-#Prikazivanje pogresnih klasifikacija
+#Showing misclassifications
 N = 10
 count = 0
 plt.figure()
@@ -252,3 +251,4 @@ for img, lab in Xtest.take(1):
             count+=1
         if (count>=10): 
             break
+
